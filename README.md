@@ -2,7 +2,7 @@
 
 Projeto foda em C++ que consulta APIs de clima, piadas e Gemini.
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/opedro/aicall/compile.yml?branch=main&logo=github)](https://github.com/opedro/aicall/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/opedro/aicall?branch=main&logo=github)](https://github.com/opedro/aicall/actions)
 [![Latest Release](https://img.shields.io/github/v/release/opedro/aicall?logo=github)](https://github.com/opedro/aicall/releases/latest)
 [![Contributors](https://img.shields.io/github/contributors/opedro/aicall?logo=github)](https://github.com/opedro/aicall/graphs/contributors)
 
