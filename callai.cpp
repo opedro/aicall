@@ -12,6 +12,16 @@ extern "C" {
 
 extern "C" cst_voice *register_cmu_us_kal(const char *voxdir);
 
+void out(string texto_saida, int com_fala=0){
+	cout << texto_saida << endl;
+	if(com_fala){
+		flite_init();
+		cst_voice *voice = register_cmu_us_kal(NULL);
+		flite_text_to_speech(texto_saida.c_str(), voice, "play");
+	}
+	return;
+}
+
 void callAPIClima(httplib::Headers headers){
 	httplib::Client cli("https://api.open-meteo.com");
 
@@ -19,7 +29,9 @@ void callAPIClima(httplib::Headers headers){
 		if (res->status == 200) {
 			try {
 				json data = json::parse(res->body);
-				cout << data["current"]["temperature_2m"] << " ºC" << endl;
+				string temperatura = data["current"]["temperature_2m"].dump();
+				temperatura.append(" ºC");
+				out(temperatura, 1);
 			}catch (json::parse_error& e){
 				cout << "Erro ao parsear JSON: " << e.what() << endl;
 			}
@@ -34,10 +46,6 @@ void callAPIClima(httplib::Headers headers){
 
 void callAPIPiada(httplib::Headers headers){
 	httplib::Client cli("https://official-joke-api.appspot.com");
-	string resposta;
-
-	flite_init();
-	cst_voice *voice = register_cmu_us_kal(NULL);
 	
 	if (auto res = cli.Get("/random_joke", headers)){
 		if (res->status == 200){
@@ -45,16 +53,9 @@ void callAPIPiada(httplib::Headers headers){
 				json data = json::parse(res->body);
 				string setup = data["setup"];
 				string punchline = data["punchline"];
-				cout << setup << endl;
-				flite_text_to_speech(setup.c_str(), voice, "play");
-				getline(cin, resposta);
-				if (resposta == data["punchline"]){
-					cout << "Acertou!";
-				} else {
-					cout << "Errou, a resposta é:" << endl;
-					flite_text_to_speech(punchline.c_str(), voice, "play");
-					cout << punchline << endl;
-				}
+				out(setup, 1);
+				cin.get();
+				out(punchline, 1);
 				
 			}catch(json::parse_error & e){
 				cout << "Erro ao parsear JSON: " << e.what() << endl;				
@@ -68,7 +69,7 @@ void callAPIPiada(httplib::Headers headers){
 void callAPIGemini(){
 	string api_key = "APIKEY AQUI";
 	string text_prompt;
-	cout << "Como posso te ajudar?" << endl;
+	out("Como posso te ajudar", 1);
 	getline(cin, text_prompt);
 
 	json request_body = {
@@ -90,9 +91,8 @@ void callAPIGemini(){
 				json response_json = json::parse(res->body);
 
 				string gemini_response = response_json["candidates"][0]["content"]["parts"][0]["text"];
-				cout << gemini_response << endl;
+				out(gemini_response, 1);
 			}catch(json::exception & e){
-				cout << res->body << endl << "=======================" << endl;
 				cerr << "Erro ao ler o JSON " << e.what() << endl;
 			}
 		}else{
