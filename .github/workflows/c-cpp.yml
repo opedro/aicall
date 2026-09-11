@@ -18,7 +18,7 @@ jobs:
       - name: Instalar dependências
         run: |
           sudo apt-get update
-          sudo apt-get install -y nlohmann-json3-dev
+          sudo apt-get install -y nlohmann-json3-dev libflite-dev
 
       - name: Compilar
         run: |
