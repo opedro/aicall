@@ -1,4 +1,4 @@
-FROM alpine:3.21
+FROM debian:bookworm-slim
 
 ENV CALLAI_AUDIO=0
 
