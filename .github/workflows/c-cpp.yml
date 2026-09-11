@@ -2,7 +2,7 @@ name: C/C++ Release
 
 on:
   push:
-    branches: ["master"]
+    branches: ["main"]
 
 permissions:
   contents: write
@@ -14,6 +14,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nlohmann-json3-dev
 
       - name: Compilar
         run: |
