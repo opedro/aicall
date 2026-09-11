@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include "httplib.h"
@@ -12,9 +13,17 @@ extern "C" {
 
 extern "C" cst_voice *register_cmu_us_kal(const char *voxdir);
 
+bool audio_ativado() {
+	const char *valor = getenv("CALLAI_AUDIO");
+	if (valor == nullptr) {
+		return true;
+	}
+	return string(valor) == "1";
+}
+
 void out(string texto_saida, int com_fala=0){
 	cout << texto_saida << endl;
-	if(com_fala){
+	if(com_fala && audio_ativado()){
 		flite_init();
 		cst_voice *voice = register_cmu_us_kal(NULL);
 		flite_text_to_speech(texto_saida.c_str(), voice, "play");
