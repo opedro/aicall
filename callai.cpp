@@ -6,6 +6,12 @@
 using namespace std;
 using json = nlohmann::json;
 
+extern "C" {
+	#include <flite/flite.h>
+}
+
+extern "C" cst_voice *register_cmu_us_kal(const char *voxdir);
+
 void callAPIClima(httplib::Headers headers){
 	httplib::Client cli("https://api.open-meteo.com");
 
@@ -29,18 +35,25 @@ void callAPIClima(httplib::Headers headers){
 void callAPIPiada(httplib::Headers headers){
 	httplib::Client cli("https://official-joke-api.appspot.com");
 	string resposta;
+
+	flite_init();
+	cst_voice *voice = register_cmu_us_kal(NULL);
 	
 	if (auto res = cli.Get("/random_joke", headers)){
 		if (res->status == 200){
 			try {
 				json data = json::parse(res->body);
-				cout << data["setup"] << endl;
+				string setup = data["setup"];
+				string punchline = data["punchline"];
+				cout << setup << endl;
+				flite_text_to_speech(setup.c_str(), voice, "play");
 				getline(cin, resposta);
 				if (resposta == data["punchline"]){
 					cout << "Acertou!";
 				} else {
 					cout << "Errou, a resposta é:" << endl;
-					cout << data["punchline"] << endl;				
+					flite_text_to_speech(punchline.c_str(), voice, "play");
+					cout << punchline << endl;
 				}
 				
 			}catch(json::parse_error & e){
@@ -53,7 +66,7 @@ void callAPIPiada(httplib::Headers headers){
 }
 
 void callAPIGemini(){
-	string api_key = "API KEY AQUI";
+	string api_key = "APIKEY AQUI";
 	string text_prompt;
 	cout << "Como posso te ajudar?" << endl;
 	getline(cin, text_prompt);
@@ -67,7 +80,7 @@ void callAPIGemini(){
 	httplib::Client cli("https://generativelanguage.googleapis.com");
 	cli.set_read_timeout(30,0);
 	httplib::Headers headers = {{"Content-type", "application/json"}};
-	string path = "/v1beta/models/gemini-3.6-flash:generateContent?key=" + api_key;
+	string path = "/v1beta/models/gemini-3.5-flash-lite:generateContent?key=" + api_key;
 
 	auto res = cli.Post(path.c_str(), headers, request_body.dump(), "application/json");
 
