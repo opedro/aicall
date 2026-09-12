@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include "httplib.h"
 #include <nlohmann/json.hpp>
@@ -67,9 +68,22 @@ void callAPIPiada(httplib::Headers headers, int fala = 0){
 }
 
 void callAPIGemini(int fala = 0){
-	string api_key = "APIKEY AQUI";
+	ifstream arquivo_keys("api_key.json");
+	if(!arquivo_keys.is_open()){
+		cerr << "Erro ao ler keys, garanta que você criou seu arquivo de api_keys" << endl;
+		return;
+	}
+	json keys;
+	arquivo_keys >> keys;
+	if(!keys.contains("gemini")){
+		cerr << "Nao foi encontrada api_key do gemini no seu arquivo de api_keys, atualize seu arquivo para utilizar" << endl;
+		return;
+	}
+	string api_key = keys["gemini"];
+	
 	string text_prompt;
 	out("Como posso te ajudar", fala);
+
 	getline(cin, text_prompt);
 
 	json request_body = {
@@ -95,6 +109,8 @@ void callAPIGemini(int fala = 0){
 			}catch(json::exception & e){
 				cerr << "Erro ao ler o JSON " << e.what() << endl;
 			}
+		} else if(res->status== 400){
+			cerr << "Erro na chamada, verifique a sua api_key" << endl;
 		}else{
 			cerr << "Erro HTTP: " << res->status << "\nDetalhes: " << res->body << endl;	
 		}
