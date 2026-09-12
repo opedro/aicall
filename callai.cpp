@@ -1,4 +1,3 @@
-#include <cstdlib>
 #include <iostream>
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include "httplib.h"
@@ -13,17 +12,9 @@ extern "C" {
 
 extern "C" cst_voice *register_cmu_us_kal(const char *voxdir);
 
-bool audio_ativado() {
-	const char *valor = getenv("CALLAI_AUDIO");
-	if (valor == nullptr) {
-		return true;
-	}
-	return string(valor) == "1";
-}
-
 void out(string texto_saida, int com_fala=0){
 	cout << texto_saida << endl;
-	if(com_fala && audio_ativado()){
+	if(com_fala){
 		flite_init();
 		cst_voice *voice = register_cmu_us_kal(NULL);
 		flite_text_to_speech(texto_saida.c_str(), voice, "play");
@@ -31,7 +22,7 @@ void out(string texto_saida, int com_fala=0){
 	return;
 }
 
-void callAPIClima(httplib::Headers headers){
+void callAPIClima(httplib::Headers headers, int fala=0){
 	httplib::Client cli("https://api.open-meteo.com");
 
 	if (auto res = cli.Get("/v1/forecast?latitude=-23.638474&longitude=-46.736305&current=temperature_2m", headers)){
@@ -40,7 +31,7 @@ void callAPIClima(httplib::Headers headers){
 				json data = json::parse(res->body);
 				string temperatura = data["current"]["temperature_2m"].dump();
 				temperatura.append(" ºC");
-				out(temperatura, 1);
+				out(temperatura, fala);
 			}catch (json::parse_error& e){
 				cout << "Erro ao parsear JSON: " << e.what() << endl;
 			}
@@ -53,7 +44,7 @@ void callAPIClima(httplib::Headers headers){
 	}
 }
 
-void callAPIPiada(httplib::Headers headers){
+void callAPIPiada(httplib::Headers headers, int fala = 0){
 	httplib::Client cli("https://official-joke-api.appspot.com");
 	
 	if (auto res = cli.Get("/random_joke", headers)){
@@ -62,9 +53,9 @@ void callAPIPiada(httplib::Headers headers){
 				json data = json::parse(res->body);
 				string setup = data["setup"];
 				string punchline = data["punchline"];
-				out(setup, 1);
+				out(setup, fala);
 				cin.get();
-				out(punchline, 1);
+				out(punchline, fala);
 				
 			}catch(json::parse_error & e){
 				cout << "Erro ao parsear JSON: " << e.what() << endl;				
@@ -75,10 +66,10 @@ void callAPIPiada(httplib::Headers headers){
 	}
 }
 
-void callAPIGemini(){
+void callAPIGemini(int fala = 0){
 	string api_key = "APIKEY AQUI";
 	string text_prompt;
-	out("Como posso te ajudar", 1);
+	out("Como posso te ajudar", fala);
 	getline(cin, text_prompt);
 
 	json request_body = {
@@ -100,7 +91,7 @@ void callAPIGemini(){
 				json response_json = json::parse(res->body);
 
 				string gemini_response = response_json["candidates"][0]["content"]["parts"][0]["text"];
-				out(gemini_response, 1);
+				out(gemini_response, fala);
 			}catch(json::exception & e){
 				cerr << "Erro ao ler o JSON " << e.what() << endl;
 			}
@@ -117,6 +108,29 @@ int main(int argc, char* argv[]){
 		cerr << "Uso: " << argv[0] << " <clima|piada|etc> " << endl;
 		return 1;
 	}
+	string opcao;
+	int fala = 0;
+	
+	for (int i = 0; i < argc; i++){
+		string arg = argv[i];
+		if (arg == "clima" || arg == "1"){
+			opcao = arg;
+			continue;
+		}
+		if (arg == "piada" || arg == "2"){
+			opcao = arg;
+			continue;
+		}
+		if (arg == "gemini" || arg == "3"){
+			opcao = arg;
+			continue;
+		}
+		if (arg == "-f"){
+			fala = 1;
+			continue;
+		}
+	}
+	
 
 	//Setup dos headers
 	httplib::Headers headers = {
@@ -124,21 +138,22 @@ int main(int argc, char* argv[]){
 		{"Accept", "application/json"}
 	};
 
-	string opcao = argv[1];
 
 	if (opcao == "clima" || opcao == "1") {
-		callAPIClima(headers);
+		callAPIClima(headers, fala);
 		return 0;
 	} else if (opcao == "piada" || opcao == "2") {
-		callAPIPiada(headers);
+		callAPIPiada(headers, fala);
 		return 0;
-	} else if (opcao == "gemini"){
-		callAPIGemini();
+	} else if (opcao == "gemini" || opcao == "3"){
+		callAPIGemini(fala);
 	} 
 	else {
 		cout << "Opcoes disponiveis:" << endl;
 		cout << "1 - clima" << endl;
 		cout << "2 - piada" << endl;
+		cout << "3 - gemini" << endl;
+
 		return 1;
 	}
 	
