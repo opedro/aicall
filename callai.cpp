@@ -73,6 +73,22 @@ void callAPIPiada(httplib::Headers headers,int salva, int fala){
 	}
 }
 
+void callAPIAdvice(httplib::Headers headers, int salva, int fala){
+	httplib::Client cli("https://api.adviceslip.com");
+	if (auto res = cli.Get("/advice", headers)){
+		if (res->status == 200){
+			try {
+				json data = json::parse(res->body);
+				string advice = data["slip"]["advice"];
+				out(advice, salva, fala);
+			}catch(json::parse_error & e){
+				cout << "Erro ao parsear JSON: " << e.what() << endl;
+			}
+		}else{
+			cout << "Erro na API" << endl;
+		}
+	}
+}
 void callAPIGemini(int salva, int fala){
 	ifstream arquivo_keys("api_key.json");
 	if(!arquivo_keys.is_open()){
@@ -148,6 +164,10 @@ int main(int argc, char* argv[]){
 			opcao = arg;
 			continue;
 		}
+		if (arg == "conselho" || arg == "4"){
+			opcao = arg;
+			continue;
+		}
 		if (arg == "-f"){
 			fala = 1;
 			continue;
@@ -159,7 +179,6 @@ int main(int argc, char* argv[]){
 	}
 	
 
-	//Setup dos headers
 	httplib::Headers headers = {
 		{"User-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
 		{"Accept", "application/json"}
@@ -174,12 +193,14 @@ int main(int argc, char* argv[]){
 		return 0;
 	} else if (opcao == "gemini" || opcao == "3"){
 		callAPIGemini(salva, fala);
-	} 
-	else {
+	} else if (opcao == "conselho" || opcao == "4"){
+		callAPIAdvice(headers, salva, fala);
+	} else {
 		cout << "Opcoes disponiveis:" << endl;
 		cout << "1 - clima" << endl;
 		cout << "2 - piada" << endl;
 		cout << "3 - gemini" << endl;
+		cout << "4 - conselho" << endl;
 
 		return 1;
 	}
