@@ -1,10 +1,11 @@
 #!/bin/bash
 set -e
 
-apt-get update
-apt-get install -y \
-    build-essential \
-    libssl-dev \
-    nlohmann-json3-dev \
-    flite1-dev \
+apk update
+apk add --no-cache \
+    build-base \
+    openssl-dev \
+    curl-dev \
+    flite-dev \
+    nlohmann-json \
     ca-certificates
