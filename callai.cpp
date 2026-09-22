@@ -105,14 +105,15 @@ void callAPIGemini(int salva, int fala){
 	
 	string text_prompt;
 	out("Como posso te ajudar?", salva, fala);
-
+	conversa:
 	getline(cin, text_prompt);
-
-	json request_body = {
-		{"contents", json::array({
-			{{"parts", json::array({{{"text", text_prompt}}})}}
+	
+	json request_body = {{"contents", json::array({
+		//{"role", "user"},
+		{"parts", json::array({
+			{{"text", text_prompt}}
 		})}
-	};
+	})}};
 
 	httplib::Client cli("https://generativelanguage.googleapis.com");
 	cli.set_read_timeout(30,0);
@@ -128,6 +129,7 @@ void callAPIGemini(int salva, int fala){
 
 				string gemini_response = response_json["candidates"][0]["content"]["parts"][0]["text"];
 				out(gemini_response, salva, fala);
+				goto conversa;
 			}catch(json::exception & e){
 				cerr << "Erro ao ler o JSON " << e.what() << endl;
 			}
