@@ -92,13 +92,19 @@ void callAPIAdvice(httplib::Headers headers, int salva, int fala){
 	}
 }
 void callAPIGemini(int salva, int fala){
-	ifstream arquivo_keys("api_key.json");
-	if(!arquivo_keys.is_open()){
-		cerr << "Erro ao ler keys, garanta que você criou seu arquivo de api_keys" << endl;
-		return;
-	}
 	json keys;
-	arquivo_keys >> keys;
+	string env_keys;
+	if(getenv("AI_API_KEYS")){
+		env_keys = getenv("AI_API_KEYS");
+		keys = nlohmann::json::parse(env_keys);		
+	}else{
+		ifstream arquivo_keys("api_key.json");
+		if(!arquivo_keys.is_open()){
+			cerr << "Erro ao ler keys, garanta que você criou seu arquivo de api_keys" << endl;
+			return;
+		}
+		arquivo_keys >> keys;
+	}
 	if(!keys.contains("gemini")){
 		cerr << "Nao foi encontrada api_key do gemini no seu arquivo de api_keys, atualize seu arquivo para utilizar" << endl;
 		return;
