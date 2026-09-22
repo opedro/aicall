@@ -13,6 +13,8 @@ extern "C" {
 
 extern "C" cst_voice *register_cmu_us_kal(const char *voxdir);
 
+int debug = 0;
+
 void out(string texto_saida, int com_salva, int com_fala){
 	cout << texto_saida << endl;
 
@@ -102,19 +104,61 @@ void callAPIGemini(int salva, int fala){
 		return;
 	}
 	string api_key = keys["gemini"];
-	
+	int conversa_nova = 1;
+	string text_answer;
+	string first_prompt;
 	string text_prompt;
+	json request_body;
+	
 	out("Como posso te ajudar?", salva, fala);
 	conversa:
+	if (!conversa_nova){
+		first_prompt = text_prompt;
+	}
 	getline(cin, text_prompt);
-	
-	json request_body = {{"contents", json::array({
-		//{"role", "user"},
-		{"parts", json::array({
-			{{"text", text_prompt}}
-		})}
-	})}};
+	if(debug){
+		cout << "conversa nova: " << conversa_nova << endl;
+		cout << "prompt atual: " << text_prompt << endl;
+		cout << "primeiro prompt: " << first_prompt << endl; 
+ 	}
+ 
+	if (conversa_nova){
+		request_body = {{"contents", json::array({
+			{{"role", "user"},
+			{"parts", json::array({
+				{{"text", text_prompt}}
+			})}}
+		})}};
+	}else{
+		request_body = {
+			{"contents", json::array({
+				{
+					{"role", "user"},
+					{"parts", json::array({
+						{{"text", first_prompt}}
+					})}
+					
+				},
+				{
+					{"role", "model"},
+					{"parts", json::array({
+						{{"text", text_answer}}
+					})}
+				},
+				{
+					{"role", "user"},
+					{"parts", json::array({
+						{{"text", text_prompt}}
+					})}
+				}
+			})}
+		};
+	}
 
+	if(debug){
+		cout << "REQUEST_BODY:"<< endl << request_body << endl << "======================="<< endl;	
+	}
+	
 	httplib::Client cli("https://generativelanguage.googleapis.com");
 	cli.set_read_timeout(30,0);
 	httplib::Headers headers = {{"Content-type", "application/json"}};
@@ -122,6 +166,10 @@ void callAPIGemini(int salva, int fala){
 
 	auto res = cli.Post(path.c_str(), headers, request_body.dump(), "application/json");
 
+	if(debug){
+		cout << "req status: " << res->status << endl; 
+	}
+	
 	if(res){
 		if(res->status == 200){
 			try{
@@ -129,6 +177,8 @@ void callAPIGemini(int salva, int fala){
 
 				string gemini_response = response_json["candidates"][0]["content"]["parts"][0]["text"];
 				out(gemini_response, salva, fala);
+				text_answer = gemini_response;
+				conversa_nova = 0;
 				goto conversa;
 			}catch(json::exception & e){
 				cerr << "Erro ao ler o JSON " << e.what() << endl;
@@ -151,7 +201,6 @@ int main(int argc, char* argv[]){
 	string opcao;
 	int fala = 0;
 	int salva = 0;
-	
 	for (int i = 0; i < argc; i++){
 		string arg = argv[i];
 		if (arg == "clima" || arg == "1"){
@@ -176,6 +225,10 @@ int main(int argc, char* argv[]){
 		}
 		if (arg == "-s"){
 			salva = 1;
+			continue;
+		}
+		if (arg=="-d"){
+			debug = 1;
 			continue;
 		}
 	}
